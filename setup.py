@@ -8,7 +8,7 @@ def listify(filename):
 setup(
     name="django-stalefields",
     version=__import__('stalefields').get_version().replace(' ', '-'),
-    url='http://github.com/smn/django-stalefields',
+    url='http://github.com/zapier/django-stalefields',
     license='BSD',
     description="Tracking stale fields on a Django model instance",
     long_description=open('README.md', 'r').read(),
