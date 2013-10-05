@@ -18,6 +18,7 @@ def reset_instance(sender, instance, **kwargs):
 signals.post_save.connect(reset_instance)
 signals.post_init.connect(reset_instance)
 
+
 class StaleFieldsMixin(object):
     """
     Gives stale field tracking ability to models, also implements a save_stale
@@ -117,7 +118,6 @@ class StaleFieldsMixin(object):
     save_dirty = save_stale
 
 
-
 def get_raw_method(method):
     import types
 
@@ -127,6 +127,7 @@ def get_raw_method(method):
         method = method.__func__
 
     return method
+
 
 def auto_add_to_model(sender, **kwargs):
     """
