@@ -2,6 +2,8 @@
 # and https://github.com/callowayproject/django-dirtyfields
 # and https://github.com/smn/django-dirtyfields
 
+import copy
+
 from django import VERSION
 
 from django.conf import settings
@@ -37,7 +39,8 @@ class StaleFieldsMixin(object):
         # id, e.g. obj.foreignkey_id = 4
         if self._deferred:
             return {}
-        return {f.name: f.to_python(getattr(self, f.attname)) for f in self._meta.fields}
+        # deepcopy for things like JSONField (where the reference sticks)
+        return {f.name: copy.deepcopy(f.to_python(getattr(self, f.attname))) for f in self._meta.fields}
 
     def get_changed_values(self):
         values = self._as_dict()
@@ -79,8 +82,8 @@ class StaleFieldsMixin(object):
 
             signals.pre_save.send(sender=self.__class__, instance=self, raw=raw, using=using)
 
-            # Detect if updating relationship field_ids directly
-            # If related field object itself has changed then the field_id
+            # detect if updating relationship field_ids directly
+            # if related field object itself has changed then the field_id
             # also changes, in which case we detect and ignore the field_id
             # change, otherwise we'll reload the object again later unnecessarily
             rel_fields = {f.column: f for f in self._meta.fields if f.rel}
@@ -95,12 +98,19 @@ class StaleFieldsMixin(object):
                     if value != obj_value:
                         updated_rel_ids.append(rel_field.column)
 
-            # Maps db column names back to field names if they differ
+            # maps db column names back to field names if they differ
             field_map = {f.column: f.name for f in self._meta.fields if f.db_column}
             for field_from, field_to in field_map.iteritems():
                 if field_from in changed_values:
                     changed_values[field_to] = changed_values[field_from]
                     del changed_values[field_from]
+
+            # apply auto_now values if present
+            for field in self._meta.fields:
+                if hasattr(field, 'auto_now') and field.auto_now and field.name not in changed_values:
+                    new_value = field.pre_save(self, False)
+                    changed_values[field.name] = new_value
+                    setattr(self, field.name, new_value)
 
             updated = self.__class__.objects.filter(pk=self.pk).update(**changed_values)
 

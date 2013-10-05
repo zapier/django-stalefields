@@ -1,3 +1,5 @@
+import time
+
 from django.test import TestCase
 
 from example_app.testing_app.models import TestModel, ForeignTestModel
@@ -53,6 +55,8 @@ class StaleFieldsMixinTestCase(TestCase):
             characters='testing',
             foreign_test_model=ftm1,
         )
+        last_changed = tm.last_changed
+        time.sleep(0.1)
         tm.characters = 'another test'
         tm.foreign_test_model = ftm2
         tm.save_stale()
@@ -60,6 +64,7 @@ class StaleFieldsMixinTestCase(TestCase):
         tm = TestModel.objects.get(id=tm.id)
         self.assertEqual(tm.characters, 'another test')
         self.assertEqual(tm.foreign_test_model, ftm2)
+        self.assertNotEqual(tm.last_changed, last_changed)
 
     def test_stale_save_fk_id(self):
         ftm1 = ForeignTestModel.objects.create(characters="foreign1")

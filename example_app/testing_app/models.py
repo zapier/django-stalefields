@@ -5,6 +5,7 @@ class ForeignTestModel(models.Model):
     """
     A simple test model with which to test foreign keys and stale fields mixin
     """
+    last_changed = models.DateTimeField(auto_now=True)
     boolean = models.BooleanField(default=True)
     characters = models.CharField(blank=True, max_length=80)
 
@@ -15,6 +16,7 @@ class TestModel(models.Model):
     """
     A simple test model with which to test stale fields mixin
     """
+    last_changed = models.DateTimeField(auto_now=True)
     boolean = models.BooleanField(default=True)
     characters = models.CharField(blank=True, max_length=80)
     foreign_test_model = models.ForeignKey(ForeignTestModel, blank=True, null=True)
