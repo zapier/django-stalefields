@@ -21,6 +21,13 @@ signals.post_save.connect(reset_instance)
 signals.post_init.connect(reset_instance)
 
 
+def stale_copy(value):
+    # no copy for primitives
+    if isinstance(value, int) or isinstance(value, bool) or isinstance(value, basestring):
+        return value
+    # deepcopy for things like JSONField (where the object reference is sticky)
+    return copy.deepcopy(value)
+
 class StaleFieldsMixin(object):
     """
     Gives stale field tracking ability to models, also implements a save_stale
@@ -39,8 +46,7 @@ class StaleFieldsMixin(object):
         # id, e.g. obj.foreignkey_id = 4
         if self._deferred:
             return {}
-        # deepcopy for things like JSONField (where the reference sticks)
-        return {f.name: copy.deepcopy(f.to_python(getattr(self, f.attname))) for f in self._meta.fields}
+        return {f.name: stale_copy(f.to_python(getattr(self, f.attname))) for f in self._meta.fields}
 
     def get_changed_values(self):
         values = self._as_dict()

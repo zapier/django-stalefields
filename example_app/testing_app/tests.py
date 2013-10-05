@@ -1,4 +1,5 @@
 import time
+import random
 
 from django.test import TestCase
 
@@ -53,6 +54,7 @@ class StaleFieldsMixinTestCase(TestCase):
         tm = TestModel.objects.create(
             boolean = False,
             characters='testing',
+            text_characters='this is testing mode',
             foreign_test_model=ftm1,
         )
         last_changed = tm.last_changed
@@ -73,6 +75,7 @@ class StaleFieldsMixinTestCase(TestCase):
         tm = TestModel.objects.create(
             boolean = False,
             characters='testing',
+            text_characters='this is testing mode',
             foreign_test_model=ftm1,
         )
         tm.foreign_test_model_id = ftm2.id
@@ -80,3 +83,41 @@ class StaleFieldsMixinTestCase(TestCase):
 
         tm = TestModel.objects.get(id=tm.id)
         self.assertEqual(tm.foreign_test_model, ftm2)
+
+    def test_stale_save_benchmark(self):
+        ftm1 = ForeignTestModel.objects.create(characters="foreign1")
+
+        tm = TestModel.objects.create(
+            boolean = False,
+            characters='testing',
+            text_characters='this is testing mode',
+            foreign_test_model=ftm1,
+        )
+
+        lengths = []
+
+        for only_save_stale in [False, True]:
+            iters = 1000
+            rando_str = lambda l: ''.join(random.choice('abcdefghjiklmnopqrstuvwxyz') for x in range(l))
+            chars = [rando_str(12) for x in range(iters)]
+
+            earlier = time.time()
+
+            for x in xrange(iters):
+                tm.characters += chars.pop()
+                if only_save_stale:
+                    tm.save_stale()
+                else:
+                    tm.save()
+
+            for x in xrange(iters):
+                tm.boolean = not tm.boolean
+                tm.save()
+                if only_save_stale:
+                    tm.save_stale()
+                else:
+                    tm.save()
+
+            lengths.append(time.time() - earlier)
+
+        print lengths[0], 'vs', lengths[1]
