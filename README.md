@@ -55,8 +55,8 @@ class TestModel(StaleFieldsMixin, models.Model):
 Using it in the shell
 =====================
 
-```
-(ve)$ ./manage.py shell
+```bash
+(django-stalefields)$ ./manage.py shell
 >>> from testing_app.models import TestModel
 >>> tm = TestModel(boolean=True, characters="testing")
 >>> tm.save()
