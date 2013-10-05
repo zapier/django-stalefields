@@ -2,3 +2,4 @@
 ve
 *.egg-info
 *.db
+dist/*
