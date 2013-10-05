@@ -37,7 +37,28 @@ $ mkvirtualenv django-stalefields
 ```
 
 
-## Using the Mixin in the Model
+## Auto-Mixin For All Models
+
+You need to set make two `settings.py` tweaks:
+
+```python
+# settings.py
+
+
+INSTALLED_APPS = (
+    'stalefields', # must be first!
+
+    # the rest...
+)
+
+AUTO_STALE_FIELDS = True
+```
+
+This provides the methods and functionality *automatically* for all
+registered models.
+
+
+## Manual Mixin in the Model
 
 ```python
 from django.db import models

@@ -9,23 +9,14 @@ from django.db import router, models
 from django.db.models import signals
 
 
-def reset_instance(instance, **kwargs):
+def reset_instance(sender, instance, **kwargs):
     """
     Called on the post_save signal.
     """
-    instance._reset_stale_state()
-
-def init_model(sender, instance, **kwargs):
-    """
-    Auto-clears out state on save!
-    """
     if hasattr(instance, '_reset_stale_state'):
-        dispatch_uid = '%s-StaleFieldsMixin-sweeper' % sender.__name__
-        signals.post_save.connect(reset_instance, sender=sender,
-                                  dispatch_uid=dispatch_uid)
         instance._reset_stale_state()
-signals.post_init.connect(init_model)
-
+signals.post_save.connect(reset_instance)
+signals.post_init.connect(reset_instance)
 
 class StaleFieldsMixin(object):
     """
@@ -35,6 +26,8 @@ class StaleFieldsMixin(object):
     all fields, potentially overriding changes by other workers while the
     current worker has the object open.
     """
+    _original_state = {}
+
     def _reset_stale_state(self):
         self._original_state = self._as_dict()
 
@@ -132,17 +125,16 @@ def get_raw_method(method):
         method = staticmethod(method)
     elif type(method) == types.MethodType:
         method = method.__func__
-    else:
-        return method
+
+    return method
 
 def auto_add_to_model(sender, **kwargs):
     """
     Applies these to models.
     """
-    attrs = ['_reset_stale_state', '_as_dict',
+    attrs = ['_original_state', '_reset_stale_state', '_as_dict',
              'get_changed_values', 'stale_fields', 'is_stale',
-             'save_stale'] + \
-            ['dirty_fields', 'is_dirty', 'save_dirty']
+             'save_stale', 'dirty_fields', 'is_dirty', 'save_dirty']
     if not isinstance(sender, StaleFieldsMixin):
         for attr in attrs:
             method = get_raw_method(getattr(StaleFieldsMixin, attr))
