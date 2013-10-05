@@ -1,8 +1,6 @@
 Django Stale Fields
 ===================
 
-**Forked from https://github.com/smn/django-dirtyfields and https://github.com/callowayproject/django-dirtyfields.**
-
 Tracking changed fields on a Django model instance.
 
 Makes a Mixin available that will give you the properties:
@@ -19,8 +17,7 @@ Which will will selectively only update stale columns using the familiar
 resolves `F()` or `auto_now` constructs).
 
 
-Installing
-==========
+## Installing
 
 Install the package using [pip][]. Then use the instructions in "Using
 the Mixin in the Model".
@@ -40,9 +37,7 @@ $ mkvirtualenv django-stalefields
 ```
 
 
-
-Using the Mixin in the Model
-============================
+## Using the Mixin in the Model
 
 ```python
 from django.db import models
@@ -54,8 +49,8 @@ class TestModel(StaleFieldsMixin, models.Model):
     characters = models.CharField(blank=True, max_length=80)
 ```
 
-Using it in the shell
-=====================
+
+## Using it in the shell
 
 ```bash
 (django-stalefields)$ ./manage.py shell
@@ -83,8 +78,14 @@ False
 ()
 ```
 
-Why would you want this?
-========================
+
+## Why would you want this?
+
+Two reasons:
+
+* Convenience
+* Optimization
+* Bug avoidance
 
 When using [signals][], especially [pressave][], it is useful to be able
 to see what fields have changed or not. A signal could change its
@@ -92,10 +93,20 @@ behaviour depending on whether a specific field has changed, whereas
 otherwise, you only could work on the event that the model's save()
 method had been called.
 
-Credits
-=======
+Any time you call boring old `save()` inside Django, all columns are inserted
+once again, which can be very heavy if, for example, you have lots of text in one
+column or many indexes that don't need to be needlessly checked for updating. Only
+updating changing columns via `update()` is much faster, but requires lots of state
+monitoring of your own accord. Put simply, this is nicer you your database!
 
-This code has largely be adapted from what was made available at [Stack Overflow][].
+Finally, if multiple threads call `save()` for different operations, only the more
+recent thread wins. If they both INSERTED only their column's changing values, that wouldn't
+be an issue!
+
+
+## Credits
+
+This code has largely be adapted from what was made available at [Stack Overflow][] and adapted from Forked from https://github.com/smn/django-dirtyfields and https://github.com/callowayproject/django-dirtyfields..
 
 
   [pip]: http://www.pip-installer.org/en/latest/
