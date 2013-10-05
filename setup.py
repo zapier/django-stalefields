@@ -12,7 +12,7 @@ setup(
     license='BSD',
     description="Tracking stale fields on a Django model instance",
     long_description=open('README.rst', 'r').read(),
-    author='Simon de Haan',
+    author='Simon de Haan & Corey Oordt & Bryan Helmig',
     packages=find_packages(),
     install_requires=listify('requirements.pip'),
     classifiers=listify('CLASSIFIERS.txt')
