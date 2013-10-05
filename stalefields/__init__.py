@@ -4,9 +4,9 @@ A model mixin to keep track of changed fields in a model.
 """
 __version_info__ = {
     'major': 0,
-    'minor': 5,
+    'minor': 6,
     'micro': 0,
-    'releaselevel': 'beta',
+    'releaselevel': 'final',
     'serial': 1
 }
 
@@ -24,7 +24,4 @@ def get_version(short=False):
 __version__ = get_version()
 
 
-try:
-    from stalefields import StaleFieldsMixin
-except:
-    pass
+from stalefields import StaleFieldsMixin

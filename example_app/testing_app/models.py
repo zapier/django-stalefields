@@ -1,8 +1,7 @@
 from django.db import models
-from stalefields import StaleFieldsMixin
 
 
-class ForeignTestModel(StaleFieldsMixin, models.Model):
+class ForeignTestModel(models.Model):
     """
     A simple test model with which to test foreign keys and stale fields mixin
     """
@@ -12,7 +11,7 @@ class ForeignTestModel(StaleFieldsMixin, models.Model):
     def __unicode__(self):
         return u'{} {}'.format(self.boolean, self.characters)
 
-class TestModel(StaleFieldsMixin, models.Model):
+class TestModel(models.Model):
     """
     A simple test model with which to test stale fields mixin
     """

@@ -3,15 +3,20 @@
 # and https://github.com/smn/django-dirtyfields
 
 from django import VERSION
-from django.db import router
-from django.db.models.signals import post_save, pre_save
+
+from django.conf import settings
+from django.db import router, models
+from django.db.models import signals
 
 
-def reset_instance(instance, *args, **kwargs):
+def reset_instance(sender, instance, **kwargs):
     """
     Called on the post_save signal.
     """
-    instance._reset_state()
+    if hasattr(instance, '_reset_stale_state'):
+        instance._reset_stale_state()
+signals.post_save.connect(reset_instance)
+signals.post_init.connect(reset_instance)
 
 
 class StaleFieldsMixin(object):
@@ -22,14 +27,9 @@ class StaleFieldsMixin(object):
     all fields, potentially overriding changes by other workers while the
     current worker has the object open.
     """
-    def __init__(self, *args, **kwargs):
-        super(StaleFieldsMixin, self).__init__(*args, **kwargs)
-        dispatch_uid = '%s-StaleFieldsMixin-sweeper' % self.__class__.__name__
-        post_save.connect(reset_instance, sender=self.__class__,
-                          dispatch_uid=dispatch_uid)
-        self._reset_state()
+    _original_state = {}
 
-    def _reset_state(self, *args, **kwargs):
+    def _reset_stale_state(self):
         self._original_state = self._as_dict()
 
     def _as_dict(self):
@@ -70,14 +70,14 @@ class StaleFieldsMixin(object):
             self.save(using=using)
             updated = 1
         else:
-            # a lot copied from django/db/models/base.py
+            # some copied from django/db/models/base.py
             using = using or router.db_for_write(self.__class__, instance=self)
 
             changed_values = self.get_changed_values()
             if len(changed_values.keys()) == 0:
                 return False
 
-            pre_save.send(sender=self.__class__, instance=self, raw=raw, using=using)
+            signals.pre_save.send(sender=self.__class__, instance=self, raw=raw, using=using)
 
             # Detect if updating relationship field_ids directly
             # If related field object itself has changed then the field_id
@@ -111,11 +111,35 @@ class StaleFieldsMixin(object):
                 rel_obj = field.related.parent_model.objects.get(pk=field_pk)
                 setattr(self, field.name, rel_obj)
 
-            self._reset_state()
-            post_save.send(sender=self.__class__, instance=self, created=False, raw=raw, using=using)
+            self._reset_stale_state()
+            signals.post_save.send(sender=self.__class__, instance=self, created=False, raw=raw, using=using)
 
         return updated == 1
     save_dirty = save_stale
+
+
+def get_raw_method(method):
+    import types
+
+    if type(method) == types.FunctionType:
+        method = staticmethod(method)
+    elif type(method) == types.MethodType:
+        method = method.__func__
+
+    return method
+
+
+def auto_add_to_model(sender, **kwargs):
+    """
+    Applies these to models.
+    """
+    attrs = ['_original_state', '_reset_stale_state', '_as_dict',
+             'get_changed_values', 'stale_fields', 'is_stale',
+             'save_stale', 'dirty_fields', 'is_dirty', 'save_dirty']
+    if not isinstance(sender, StaleFieldsMixin):
+        for attr in attrs:
+            method = get_raw_method(getattr(StaleFieldsMixin, attr))
+            sender.add_to_class(attr, method)
 
 
 # Django 1.5 added support for updating only specified fields, this fails in
@@ -126,3 +150,7 @@ if VERSION >= (1, 5):
             kwargs['update_fields'] = self.stale_fields
         return super(StaleFieldsMixin, self).save(*args, **kwargs)
     StaleFieldsMixin.save = save
+
+
+if getattr(settings, 'AUTO_STALE_FIELDS', False):
+    signals.class_prepared.connect(auto_add_to_model)

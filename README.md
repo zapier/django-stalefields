@@ -37,7 +37,28 @@ $ mkvirtualenv django-stalefields
 ```
 
 
-## Using the Mixin in the Model
+## Auto-Mixin For All Models
+
+You need to set make two `settings.py` tweaks:
+
+```python
+# settings.py
+
+
+INSTALLED_APPS = (
+    'stalefields', # must be first!
+
+    # the rest...
+)
+
+AUTO_STALE_FIELDS = True
+```
+
+This provides the methods and functionality *automatically* for all
+registered models.
+
+
+## Manual Mixin in the Model
 
 ```python
 from django.db import models
@@ -52,7 +73,7 @@ class TestModel(StaleFieldsMixin, models.Model):
 
 ## Using it in the shell
 
-```bash
+```python
 (django-stalefields)$ ./manage.py shell
 >>> from testing_app.models import TestModel
 >>> tm = TestModel(boolean=True, characters="testing")
@@ -71,7 +92,7 @@ True
 True
 >>> tm.stale_fields
 ('boolean', 'characters', )
->>> tm.save_dirty()
+>>> tm.save_dirty() # just saves the dirty fields via .update()
 >>> tm.is_stale
 False
 >>> tm.get_stale_fields
