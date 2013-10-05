@@ -1,0 +1,4 @@
+*.pyc
+ve
+*.egg-info
+*.db
