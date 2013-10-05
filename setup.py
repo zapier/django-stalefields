@@ -11,8 +11,9 @@ setup(
     url='http://github.com/smn/django-stalefields',
     license='BSD',
     description="Tracking stale fields on a Django model instance",
-    long_description=open('README.rst', 'r').read(),
+    long_description=open('README.md', 'r').read(),
     author='Simon de Haan & Corey Oordt & Bryan Helmig',
+    author_email='bryan@zapier.com',
     packages=find_packages(),
     install_requires=listify('requirements.pip'),
     classifiers=listify('CLASSIFIERS.txt')
