@@ -1,6 +1,8 @@
 Django Stale Fields
 ===================
 
+**Forked from https://github.com/smn/django-dirtyfields and https://github.com/callowayproject/django-dirtyfields.**
+
 Tracking changed fields on a Django model instance.
 
 Makes a Mixin available that will give you the properties:
