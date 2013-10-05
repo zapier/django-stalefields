@@ -81,7 +81,7 @@ False
 
 ## Why would you want this?
 
-Two reasons:
+Three reasons:
 
 * Convenience
 * Optimization
@@ -101,7 +101,7 @@ monitoring of your own accord. Put simply, this is nicer you your database!
 
 Finally, if multiple threads call `save()` for different operations, only the more
 recent thread wins. If they both INSERTED only their column's changing values, that wouldn't
-be an issue!
+be an issue! These kinds of bugs are a nightmare to chase down...
 
 
 ## Credits
