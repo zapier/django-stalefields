@@ -24,7 +24,4 @@ def get_version(short=False):
 __version__ = get_version()
 
 
-try:
-    from stalefields import StaleFieldsMixin
-except:
-    pass
+from stalefields import StaleFieldsMixin

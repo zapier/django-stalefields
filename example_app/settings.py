@@ -91,6 +91,8 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'example_app.testing_app',
+
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -100,5 +102,6 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'example_app.testing_app'
 )
+
+AUTO_STALE_FIELDS = True

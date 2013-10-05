@@ -52,7 +52,7 @@ class TestModel(StaleFieldsMixin, models.Model):
 
 ## Using it in the shell
 
-```bash
+```python
 (django-stalefields)$ ./manage.py shell
 >>> from testing_app.models import TestModel
 >>> tm = TestModel(boolean=True, characters="testing")
@@ -71,7 +71,7 @@ True
 True
 >>> tm.stale_fields
 ('boolean', 'characters', )
->>> tm.save_dirty()
+>>> tm.save_dirty() # just saves the dirty fields via .update()
 >>> tm.is_stale
 False
 >>> tm.get_stale_fields
