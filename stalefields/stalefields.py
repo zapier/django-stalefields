@@ -11,22 +11,13 @@ from django.db import router, models
 from django.db.models import signals
 
 
-def reset_instance(sender, instance, **kwargs):
-    """
-    Called on the post_save signal.
-    """
-    if hasattr(instance, '_reset_stale_state'):
-        instance._reset_stale_state()
-signals.post_save.connect(reset_instance)
-signals.post_init.connect(reset_instance)
-
-
 def stale_copy(value):
     # no copy for primitives
     if isinstance(value, int) or isinstance(value, bool) or isinstance(value, basestring):
         return value
     # deepcopy for things like JSONField (where the object reference is sticky)
     return copy.deepcopy(value)
+
 
 class StaleFieldsMixin(object):
     """
@@ -132,16 +123,26 @@ class StaleFieldsMixin(object):
     save_dirty = save_stale
 
 
-def get_raw_method(method):
-    import types
+def reset_instance(sender, instance, **kwargs):
+    """
+    Called on the post_save signal.
+    """
+    if hasattr(instance, '_reset_stale_state'):
+        instance._reset_stale_state()
+signals.post_save.connect(reset_instance)
+signals.post_init.connect(reset_instance)
 
+def get_raw_method(method):
+    """
+    Allows you to attach other class methods or random
+    functions to other classes properly. 
+    """
+    import types
     if type(method) == types.FunctionType:
         method = staticmethod(method)
     elif type(method) == types.MethodType:
         method = method.__func__
-
     return method
-
 
 def auto_add_to_model(sender, **kwargs):
     """
@@ -155,6 +156,9 @@ def auto_add_to_model(sender, **kwargs):
             method = get_raw_method(getattr(StaleFieldsMixin, attr))
             sender.add_to_class(attr, method)
 
+if getattr(settings, 'AUTO_STALE_FIELDS', False):
+    signals.class_prepared.connect(auto_add_to_model)
+
 
 # Django 1.5 added support for updating only specified fields, this fails in
 # older versions.
@@ -164,7 +168,3 @@ if VERSION >= (1, 5):
             kwargs['update_fields'] = self.stale_fields
         return super(StaleFieldsMixin, self).save(*args, **kwargs)
     StaleFieldsMixin.save = save
-
-
-if getattr(settings, 'AUTO_STALE_FIELDS', False):
-    signals.class_prepared.connect(auto_add_to_model)
