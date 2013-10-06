@@ -126,7 +126,6 @@ class StaleFieldsMixin(object):
                 rel_obj = field.related.parent_model.objects.get(pk=field_pk)
                 setattr(self, field.name, rel_obj)
 
-            self._reset_stale_state()
             signals.post_save.send(sender=self.__class__, instance=self, created=False, raw=raw, using=using)
 
         return updated == 1
