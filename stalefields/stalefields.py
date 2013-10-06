@@ -49,8 +49,8 @@ class StaleFieldsMixin(object):
         return {f.name: stale_copy(f.to_python(getattr(self, f.attname))) for f in self._meta.fields}
 
     def get_changed_values(self):
-        values = self._as_dict()
-        return {f.name: values[f.name] for f in self._meta.fields if f.name in self.stale_fields}
+        new_state = self._as_dict()
+        return {name: new_state[name] for name, old_value in self._original_state.iteritems() if old_value != new_state[name]}
 
     @property
     def stale_fields(self):
@@ -59,8 +59,7 @@ class StaleFieldsMixin(object):
         """
         if self._deferred:
             raise TypeError('Cant be used with deferred objects')
-        new_state = self._as_dict()
-        return tuple(k for k, v in self._original_state.iteritems() if v != new_state[k])
+        return tuple(self.get_changed_values().keys())
     dirty_fields = stale_fields
 
     @property
