@@ -23,7 +23,9 @@ def get_version(short=False):
 
 __version__ = get_version()
 
+from django.core.exceptions import ImproperlyConfigured
+
 try:
     from stalefields import StaleFieldsMixin
-except ImportError, e:
+except (ImportError, ImproperlyConfigured), e:
     pass
