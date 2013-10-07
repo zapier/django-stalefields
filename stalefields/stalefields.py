@@ -7,7 +7,7 @@ import copy
 from django import VERSION
 
 from django.conf import settings
-from django.db import router, models
+from django.db import router
 from django.db.models import signals
 
 
