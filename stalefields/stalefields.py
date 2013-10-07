@@ -60,11 +60,13 @@ class StaleFieldsMixin(object):
         return bool(self.stale_fields)
     is_dirty = is_stale
 
-    def save_stale(self, raw=False, using=None):
+    def save_stale(self, raw=False, using=None, signal_anyways=False):
         """
         An alternative to save, instead writing every field again, only updates
         the stale fields via QuerySet.update
         """
+        updated = 0
+
         if not self.pk:
             self.save(using=using)
             updated = 1
@@ -73,51 +75,53 @@ class StaleFieldsMixin(object):
             using = using or router.db_for_write(self.__class__, instance=self)
 
             changed_values = self.get_changed_values()
-            if len(changed_values.keys()) == 0:
-                return False
 
-            signals.pre_save.send(sender=self.__class__, instance=self, raw=raw, using=using)
+            if changed_values or signal_anyways:
+                signals.pre_save.send(sender=self.__class__, instance=self, raw=raw, using=using)
 
-            # detect if updating relationship field_ids directly
-            # if related field object itself has changed then the field_id
-            # also changes, in which case we detect and ignore the field_id
-            # change, otherwise we'll reload the object again later unnecessarily
-            rel_fields = {f.column: f for f in self._meta.fields if f.rel}
-            updated_rel_ids = []
-            for field_name in changed_values.keys():
-                if field_name in rel_fields.keys():
-                    rel_field = rel_fields[field_name]
-                    value = changed_values[rel_field.column]
-                    obj_value = getattr(self, rel_field.name).pk
-                    del changed_values[rel_field.column]
-                    changed_values[rel_field.name] = value
-                    if value != obj_value:
-                        updated_rel_ids.append(rel_field.column)
+            # nothing has changed, don't do anything at all
+            if changed_values:
+                # detect if updating relationship field_ids directly
+                # if related field object itself has changed then the field_id
+                # also changes, in which case we detect and ignore the field_id
+                # change, otherwise we'll reload the object again later unnecessarily
+                rel_fields = {f.column: f for f in self._meta.fields if f.rel}
+                updated_rel_ids = []
+                for field_name in changed_values.keys():
+                    if field_name in rel_fields.keys():
+                        rel_field = rel_fields[field_name]
+                        value = changed_values[rel_field.column]
+                        obj_value = getattr(self, rel_field.name).pk
+                        del changed_values[rel_field.column]
+                        changed_values[rel_field.name] = value
+                        if value != obj_value:
+                            updated_rel_ids.append(rel_field.column)
 
-            # maps db column names back to field names if they differ
-            field_map = {f.column: f.name for f in self._meta.fields if f.db_column}
-            for field_from, field_to in field_map.iteritems():
-                if field_from in changed_values:
-                    changed_values[field_to] = changed_values[field_from]
-                    del changed_values[field_from]
+                # maps db column names back to field names if they differ
+                field_map = {f.column: f.name for f in self._meta.fields if f.db_column}
+                for field_from, field_to in field_map.iteritems():
+                    if field_from in changed_values:
+                        changed_values[field_to] = changed_values[field_from]
+                        del changed_values[field_from]
 
-            # apply auto_now values if present
-            for field in self._meta.fields:
-                if hasattr(field, 'auto_now') and field.auto_now and field.name not in changed_values:
-                    new_value = field.pre_save(self, False)
-                    changed_values[field.name] = new_value
-                    setattr(self, field.name, new_value)
+                # apply auto_now values if present
+                for field in self._meta.fields:
+                    if hasattr(field, 'auto_now') and field.auto_now and field.name not in changed_values:
+                        new_value = field.pre_save(self, False)
+                        changed_values[field.name] = new_value
+                        setattr(self, field.name, new_value)
 
-            updated = self.__class__.objects.filter(pk=self.pk).update(**changed_values)
+                updated = self.__class__.objects.filter(pk=self.pk).update(**changed_values)
 
-            # Reload updated relationships
-            for field_name in updated_rel_ids:
-                field = rel_fields[field_name]
-                field_pk = getattr(self, field_name)
-                rel_obj = field.related.parent_model.objects.get(pk=field_pk)
-                setattr(self, field.name, rel_obj)
+                # Reload updated relationships
+                for field_name in updated_rel_ids:
+                    field = rel_fields[field_name]
+                    field_pk = getattr(self, field_name)
+                    rel_obj = field.related.parent_model.objects.get(pk=field_pk)
+                    setattr(self, field.name, rel_obj)
 
-            signals.post_save.send(sender=self.__class__, instance=self, created=False, raw=raw, using=using)
+            if changed_values or signal_anyways:
+                signals.post_save.send(sender=self.__class__, instance=self, created=False, raw=raw, using=using)
 
         return updated == 1
     save_dirty = save_stale

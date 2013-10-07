@@ -8,6 +8,14 @@ from example_app.testing_app.models import TestModel, ForeignTestModel
 
 class StaleFieldsMixinTestCase(TestCase):
 
+    def test_nothing_changing(self):
+        tm = TestModel()
+        tm.boolean = False
+        tm.characters = 'testing'
+        tm.save()
+
+        self.assertFalse(tm.save_stale())
+
     def test_stale_fields(self):
         tm = TestModel()
         # initial state shouldn't be stale
@@ -97,7 +105,7 @@ class StaleFieldsMixinTestCase(TestCase):
         lengths = []
 
         for only_save_stale in [False, True]:
-            iters = 1000
+            iters = 100
             rando_str = lambda l: ''.join(random.choice('abcdefghjiklmnopqrstuvwxyz') for x in range(l))
             chars = [rando_str(12) for x in range(iters)]
 
