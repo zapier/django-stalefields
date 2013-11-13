@@ -27,6 +27,7 @@ class StaleFieldsMixin(object):
     all fields, potentially overriding changes by other workers while the
     current worker has the object open.
     """
+    _is_stale_enabled = True
     _original_state = {}
 
     def _reset_stale_state(self):
@@ -154,8 +155,9 @@ def auto_add_to_model(sender, **kwargs):
     """
     attrs = ['_original_state', '_reset_stale_state', '_as_dict',
              'get_changed_values', 'stale_fields', 'is_stale',
-             'save_stale', 'dirty_fields', 'is_dirty', 'save_dirty']
-    if not isinstance(sender, StaleFieldsMixin):
+             'save_stale', 'dirty_fields', 'is_dirty', 'save_dirty',
+             '_is_stale_enabled']
+    if not (isinstance(sender, StaleFieldsMixin) or getattr(sender, '_is_stale_enabled', False)):
         for attr in attrs:
             method = get_raw_method(getattr(StaleFieldsMixin, attr))
             sender.add_to_class(attr, method)
