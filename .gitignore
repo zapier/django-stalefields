@@ -3,3 +3,8 @@ ve
 *.egg-info
 *.db
 dist/*
+.settings/org.eclipse.core.resources.prefs
+
+.pydevproject
+
+.project

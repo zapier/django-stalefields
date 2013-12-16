@@ -1,8 +1,7 @@
-import time
 import random
+import time
 
 from django.test import TestCase
-
 from example_app.testing_app.models import TestModel, ForeignTestModel
 
 
@@ -28,7 +27,7 @@ class StaleFieldsMixinTestCase(TestCase):
 
         # resetting them to original values should unflag
         tm.boolean = True
-        self.assertEqual(tm.stale_fields, ('characters', ))
+        self.assertEqual(tm.stale_fields, ('characters',))
 
     def test_sweeping(self):
         tm = TestModel()
@@ -51,16 +50,16 @@ class StaleFieldsMixinTestCase(TestCase):
 
         self.assertEqual(tm.stale_fields, tuple())
         tm.foreign_test_model = ftm2
-        self.assertEqual(tm.stale_fields, ('foreign_test_model', ))
+        self.assertEqual(tm.stale_fields, ('foreign_test_model',))
         tm.foreign_test_model.characters = "foreign2.0"
-        self.assertEqual(tm.foreign_test_model.stale_fields, ('characters', ))
+        self.assertEqual(tm.foreign_test_model.stale_fields, ('characters',))
 
     def test_stale_save(self):
         ftm1 = ForeignTestModel.objects.create(characters="foreign1")
         ftm2 = ForeignTestModel.objects.create(characters="foreign2")
 
         tm = TestModel.objects.create(
-            boolean = False,
+            boolean=False,
             characters='testing',
             text_characters='this is testing mode',
             foreign_test_model=ftm1,
@@ -81,7 +80,7 @@ class StaleFieldsMixinTestCase(TestCase):
         ftm2 = ForeignTestModel.objects.create(characters="foreign2")
 
         tm = TestModel.objects.create(
-            boolean = False,
+            boolean=False,
             characters='testing',
             text_characters='this is testing mode',
             foreign_test_model=ftm1,
@@ -96,7 +95,7 @@ class StaleFieldsMixinTestCase(TestCase):
         ftm1 = ForeignTestModel.objects.create(characters="foreign1")
 
         tm = TestModel.objects.create(
-            boolean = False,
+            boolean=False,
             characters='testing',
             text_characters='this is testing mode',
             foreign_test_model=ftm1,

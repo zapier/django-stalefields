@@ -22,10 +22,3 @@ def get_version(short=False):
     return ''.join(vers)
 
 __version__ = get_version()
-
-from django.core.exceptions import ImproperlyConfigured
-
-try:
-    from stalefields import StaleFieldsMixin
-except (ImportError, ImproperlyConfigured), e:
-    pass

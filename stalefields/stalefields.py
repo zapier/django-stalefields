@@ -5,7 +5,6 @@
 import copy
 
 from django import VERSION
-
 from django.conf import settings
 from django.db import router
 from django.db.models import signals
@@ -140,7 +139,7 @@ signals.post_init.connect(reset_instance)
 def get_raw_method(method):
     """
     Allows you to attach other class methods or random
-    functions to other classes properly. 
+    functions to other classes properly.
     """
     import types
     if type(method) == types.FunctionType:
