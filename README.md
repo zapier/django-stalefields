@@ -1,3 +1,5 @@
+_This project is no longer maintained, but we recommend looking at [django-dirtyfields](https://github.com/romgar/django-dirtyfields)_
+
 Django Stale Fields
 ===================
 
